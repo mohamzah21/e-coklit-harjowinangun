@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#991b1b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>SI-PILKADES Harjowinangun | Pendataan Pemilih</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f3f4f6; }
+    .tab-active { border-bottom: 3px solid #991b1b; color: #991b1b; font-weight: 700; }
+  </style>
+</head>
+<body class="pb-20 md:pb-8">
+
+  <!-- HEADER -->
+  <header class="bg-red-800 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="bg-white text-red-800 w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-lg shadow">
+          P2KD
+        </div>
+        <div>
+          <h1 class="font-bold text-base md:text-lg leading-tight">E-COKLIT PILKADES HARJOWINANGUN</h1>
+          <p class="text-xs text-red-200">Kec. Balapulang, Kab. Tegal • 4 RW (25 RT)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="hidden md:inline-block bg-red-900 text-xs px-3 py-1 rounded-full border border-red-700">
+          Pemetaan: RW 1–4 (6, 7, 6, 6 RT)
+        </span>
+      </div>
+    </div>
+
+    <!-- DESKTOP NAVIGATION -->
+    <nav class="bg-white text-gray-600 border-b border-gray-200 hidden md:block">
+      <div class="max-w-6xl mx-auto px-4 flex gap-6 text-sm">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="py-3 tab-active"><i class="fa-solid fa-chart-pie mr-1.5"></i>Dashboard Rekap</button>
+        <button onclick="switchTab('dp4')" id="nav-dp4" class="py-3 hover:text-red-800"><i class="fa-solid fa-file-import mr-1.5"></i>1. Upload DP4</button>
+        <button onclick="switchTab('coklit')" id="nav-coklit" class="py-3 hover:text-red-800"><i class="fa-solid fa-clipboard-check mr-1.5"></i>2. Coklit (DPS)</button>
+        <button onclick="switchTab('dptb')" id="nav-dptb" class="py-3 hover:text-red-800"><i class="fa-solid fa-user-plus mr-1.5"></i>3. Input DPTb</button>
+        <button onclick="switchTab('dpt')" id="nav-dpt" class="py-3 hover:text-red-800"><i class="fa-solid fa-check-double mr-1.5"></i>4. Penetapan DPT</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-6xl mx-auto px-4 py-5">
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="tab-dashboard" class="space-y-5">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-bold text-gray-800 text-lg">Rekapitulasi Pemutakhiran Data Pemilih</h2>
+          <p class="text-xs text-gray-500">Wilayah Desa Harjowinangun: RW 001 (6 RT), RW 002 (7 RT), RW 003 (6 RT), RW 004 (6 RT)</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="exportCSV('DPT')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-sm">
+            <i class="fa-solid fa-file-excel mr-1"></i> Unduh Excel DPT
+          </button>
+        </div>
+      </div>
+
+      <!-- KARTU STATISTIK -->
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-slate-500">
+          <p class="text-xs text-gray-500 font-medium">Total DP4 Awal</p>
+          <p id="stat-dp4" class="text-2xl font-extrabold text-slate-800 mt-1">0</p>
+          <p class="text-[11px] text-gray-400 mt-1">Data Disdukcapil</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-amber-500">
+          <p class="text-xs text-gray-500 font-medium">Belum Dicoklit</p>
+          <p id="stat-belum" class="text-2xl font-extrabold text-amber-600 mt-1">0</p>
+          <p class="text-[11px] text-gray-400 mt-1">Menunggu Pantarlih</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
+          <p class="text-xs text-gray-500 font-medium">TMS (Coret)</p>
+          <p id="stat-tms" class="text-2xl font-extrabold text-red-600 mt-1">0</p>
+          <p class="text-[11px] text-gray-400 mt-1">Meninggal/Pindah/Ganda</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+          <p class="text-xs text-gray-500 font-medium">Pemilih Baru (DPTb)</p>
+          <p id="stat-dptb" class="text-2xl font-extrabold text-blue-600 mt-1">0</p>
+          <p class="text-[11px] text-gray-400 mt-1">Tambahan Lapangan</p>
+        </div>
+        <div class="col-span-2 md:col-span-1 bg-emerald-50 p-4 rounded-xl shadow-sm border-l-4 border-emerald-600">
+          <p class="text-xs text-emerald-800 font-bold">TOTAL DPT AKTIF</p>
+          <p id="stat-dpt" class="text-2xl font-extrabold text-emerald-700 mt-1">0</p>
+          <p class="text-[11px] text-emerald-600 mt-1">MS + DPTb Siap Pilih</p>
+        </div>
+      </div>
+
+      <!-- REKAP PER RW -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+          <h3 class="font-bold text-gray-800 text-sm">Rekapitulasi Per RW (Desa Harjowinangun)</h3>
+          <span class="text-xs text-gray-500">RW 001–RW 004 (25 RT)</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-600 uppercase">
+              <tr>
+                <th class="px-4 py-2.5">RW & Cakupan RT</th>
+                <th class="px-4 py-2.5 text-center">Laki-laki</th>
+                <th class="px-4 py-2.5 text-center">Perempuan</th>
+                <th class="px-4 py-2.5 text-center">TMS</th>
+                <th class="px-4 py-2.5 text-center">DPTb</th>
+                <th class="px-4 py-2.5 text-right font-bold">Total DPT</th>
+              </tr>
+            </thead>
+            <tbody id="rwRekapBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- REKAP RINCI PER RT -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <h3 class="font-bold text-gray-800 text-sm">Rincian Per RT (25 RT)</h3>
+          <select id="rekapFilterRW" onchange="updateStatsAndRekap()" class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg bg-white">
+            <option value="">Tampilkan Semua RW (25 RT)</option>
+            <option value="001">RW 001 (RT 001 – RT 006)</option>
+            <option value="002">RW 002 (RT 001 – RT 007)</option>
+            <option value="003">RW 003 (RT 001 – RT 006)</option>
+            <option value="004">RW 004 (RT 001 – RT 006)</option>
+          </select>
+        </div>
+        <div class="overflow-x-auto max-h-96">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-600 uppercase sticky top-0">
+              <tr>
+                <th class="px-4 py-2.5">RW</th>
+                <th class="px-4 py-2.5">RT</th>
+                <th class="px-4 py-2.5 text-center">Belum Coklit</th>
+                <th class="px-4 py-2.5 text-center">L</th>
+                <th class="px-4 py-2.5 text-center">P</th>
+                <th class="px-4 py-2.5 text-center">TMS</th>
+                <th class="px-4 py-2.5 text-center">DPTb</th>
+                <th class="px-4 py-2.5 text-right font-bold">Total DPT</th>
+              </tr>
+            </thead>
+            <tbody id="rtRekapBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: UPLOAD DP4 -->
+    <section id="tab-dp4" class="hidden space-y-5">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+        <h2 class="font-bold text-gray-800 text-lg mb-1">1. Upload Data Awal Penduduk Potensial Pemilih (DP4)</h2>
+        <p class="text-xs text-gray-500 mb-4">
+          Unggah file CSV DP4 dengan 9 kolom:
+          <code class="bg-gray-100 px-1 rounded">NIK,NAMA,JENIS_KELAMIN,TEMPAT_LAHIR,TANGGAL_LAHIR,ALAMAT,RT,RW,TPS</code>
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-red-500 transition bg-gray-50">
+            <i class="fa-solid fa-cloud-arrow-up text-3xl text-red-700 mb-2"></i>
+            <p class="text-sm font-semibold text-gray-700">Pilih File CSV DP4</p>
+            <p class="text-xs text-gray-400 mb-3">Mendukung pemisah koma (,) atau titik koma (;)</p>
+            <input type="file" id="csvFileInput" accept=".csv" class="hidden" onchange="handleCSVUpload(event)" />
+            <button onclick="document.getElementById('csvFileInput').click()" class="bg-red-800 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-lg">
+              Pilih File dari Perangkat
+            </button>
+          </div>
+
+          <div class="bg-blue-50 border border-blue-100 rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-blue-900 text-sm mb-1"><i class="fa-solid fa-circle-info mr-1"></i> Pemetaan Wilayah & Kolom</h3>
+              <p class="text-xs text-blue-800 leading-relaxed">
+                <strong>RW 001:</strong> 6 RT • <strong>RW 002:</strong> 7 RT • <strong>RW 003:</strong> 6 RT • <strong>RW 004:</strong> 6 RT.
+                Urutan kolom: NIK, Nama, Jenis Kelamin, Tempat Lahir, Tanggal Lahir, Alamat, RT, RW, TPS.
+              </p>
+            </div>
+            <div class="mt-4 flex gap-2">
+              <button onclick="downloadTemplateCSV()" class="bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold px-3.5 py-2 rounded-lg">
+                <i class="fa-solid fa-download mr-1"></i> Download Template CSV DP4
+              </button>
+              <button onclick="clearAllData()" class="bg-white hover:bg-red-50 text-red-600 border border-red-200 text-xs font-semibold px-3 py-2 rounded-lg">
+                Kosongkan Database
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABEL PREVIEW DP4 -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex justify-between items-center">
+          <h3 class="font-bold text-gray-800 text-sm">Daftar Data DP4 Masuk</h3>
+          <span id="dp4CountBadge" class="bg-gray-100 text-gray-700 text-xs px-2.5 py-1 rounded-full font-semibold">0 Data</span>
+        </div>
+        <div class="overflow-x-auto max-h-96">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-600 sticky top-0">
+              <tr>
+                <th class="px-3 py-2.5">NIK</th>
+                <th class="px-3 py-2.5">Nama</th>
+                <th class="px-3 py-2.5">JK</th>
+                <th class="px-3 py-2.5">Tempat, Tgl Lahir</th>
+                <th class="px-3 py-2.5">Alamat</th>
+                <th class="px-3 py-2.5">RT/RW</th>
+                <th class="px-3 py-2.5">TPS</th>
+                <th class="px-3 py-2.5">Status</th>
+                <th class="px-3 py-2.5 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="dp4TableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: COKLIT LAPANGAN -->
+    <section id="tab-coklit" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
+          <div>
+            <h2 class="font-bold text-gray-800 text-lg">2. Pencocokan & Penelitian (Coklit → DPS)</h2>
+            <p class="text-xs text-gray-500">Mode Petugas Pantarlih: Filter per RW, RT, TPS & Status Coklit</p>
+          </div>
+          <button onclick="exportCSV('DPS')" class="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg self-start">
+            <i class="fa-solid fa-file-export mr-1"></i> Export DPS (Hasil Coklit)
+          </button>
+        </div>
+
+        <!-- FILTER PENCARIAN -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5">
+          <div class="sm:col-span-2 relative">
+            <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+            <input type="text" id="searchCoklit" onkeyup="renderCoklitList()" placeholder="Cari Nama, NIK, atau Tempat Lahir..." class="w-full pl-8 pr-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-red-700" />
+          </div>
+          <select id="filterRW" onchange="onFilterRWChange()" class="px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white">
+            <option value="">Semua RW</option>
+            <option value="001">RW 001 (6 RT)</option>
+            <option value="002">RW 002 (7 RT)</option>
+            <option value="003">RW 003 (6 RT)</option>
+            <option value="004">RW 004 (6 RT)</option>
+          </select>
+          <select id="filterRT" onchange="renderCoklitList()" class="px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white">
+            <option value="">Semua RT</option>
+          </select>
+          <input type="text" id="filterTPS" onkeyup="renderCoklitList()" placeholder="Filter TPS (mis. TPS 01)" class="px-3 py-2 text-xs border border-gray-300 rounded-lg focus:outline-none focus:border-red-700" />
+          <select id="filterStatus" onchange="renderCoklitList()" class="px-3 py-2 text-xs border border-gray-300 rounded-lg bg-white">
+            <option value="">Semua Status</option>
+            <option value="BELUM">Belum Dicoklit</option>
+            <option value="MS">Memenuhi Syarat (MS)</option>
+            <option value="TMS">Tidak Memenuhi Syarat (TMS)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- KARTU PEMILIH -->
+      <div id="coklitCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    </section>
+
+    <!-- TAB 4: INPUT DPTB -->
+    <section id="tab-dptb" class="hidden space-y-5">
+      <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
+        <h2 class="font-bold text-gray-800 text-lg mb-1">3. Tambah Daftar Pemilih Tambahan (DPTb)</h2>
+        <p class="text-xs text-gray-500 mb-4">Tambahkan warga Desa Harjowinangun yang memenuhi syarat namun belum tercantum di DP4/DPS.</p>
+
+        <form onsubmit="addDPTb(event)" class="space-y-3 text-xs">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">NIK (16 Digit) *</label>
+              <input type="text" id="dptbNik" maxlength="16" required placeholder="3328xxxxxxxxxxxx" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            </div>
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Nama Lengkap (Sesuai KTP) *</label>
+              <input type="text" id="dptbNama" required placeholder="NAMA LENGKAP" class="w-full px-3 py-2 border border-gray-300 rounded-lg uppercase" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Jenis Kelamin *</label>
+              <select id="dptbJk" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                <option value="L">Laki-laki (L)</option>
+                <option value="P">Perempuan (P)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Tempat Lahir *</label>
+              <input type="text" id="dptbTempatLahir" required placeholder="TEGAL" class="w-full px-3 py-2 border border-gray-300 rounded-lg uppercase" />
+            </div>
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Tanggal Lahir *</label>
+              <input type="date" id="dptbTgl" required class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">RW *</label>
+              <select id="dptbRw" onchange="populateDPTbRTOptions()" required class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white">
+                <option value="001">RW 001 (6 RT)</option>
+                <option value="002">RW 002 (7 RT)</option>
+                <option value="003">RW 003 (6 RT)</option>
+                <option value="004">RW 004 (6 RT)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">RT *</label>
+              <select id="dptbRt" required class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white"></select>
+            </div>
+            <div class="col-span-2 md:col-span-1">
+              <label class="block font-semibold text-gray-700 mb-1">TPS *</label>
+              <input type="text" id="dptbTps" required placeholder="TPS 01" class="w-full px-3 py-2 border border-gray-300 rounded-lg uppercase" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-semibold text-gray-700 mb-1">Alamat *</label>
+            <input type="text" id="dptbAlamat" required placeholder="Ds. Harjowinangun, Kec. Balapulang, Kab. Tegal" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2.5 rounded-lg shadow">
+              <i class="fa-solid fa-plus-circle mr-1"></i> Simpan ke DPTb & DPT
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- TAB 5: PENETAPAN DPT FINAL -->
+    <section id="tab-dpt" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <h2 class="font-bold text-gray-800 text-lg">4. Daftar Pemilih Tetap (DPT) Final</h2>
+          <p class="text-xs text-gray-500">Gabungan Pemilih Memenuhi Syarat (MS) dari DPS + Pemilih Tambahan (DPTb)</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-900 text-white text-xs font-semibold px-3.5 py-2 rounded-lg">
+            <i class="fa-solid fa-print mr-1"></i> Cetak / PDF
+          </button>
+          <button onclick="exportCSV('DPT')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg">
+            <i class="fa-solid fa-file-excel mr-1"></i> Download Excel DPT
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-emerald-800 text-white">
+              <tr>
+                <th class="px-3 py-2.5">No</th>
+                <th class="px-3 py-2.5">NIK</th>
+                <th class="px-3 py-2.5">Nama</th>
+                <th class="px-3 py-2.5">JK</th>
+                <th class="px-3 py-2.5">Tempat, Tanggal Lahir</th>
+                <th class="px-3 py-2.5">Alamat</th>
+                <th class="px-3 py-2.5">RT/RW</th>
+                <th class="px-3 py-2.5">TPS</th>
+                <th class="px-3 py-2.5">Sumber</th>
+              </tr>
+            </thead>
+            <tbody id="dptTableBody" class="divide-y divide-gray-100"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL ALASAN TMS -->
+  <div id="tmsModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-xl">
+      <h3 class="font-bold text-gray-800 text-base mb-1">Tandai Tidak Memenuhi Syarat (TMS)</h3>
+      <p id="tmsVoterName" class="text-xs text-gray-500 mb-3"></p>
+      <input type="hidden" id="tmsVoterId" />
+      <label class="block text-xs font-semibold text-gray-700 mb-1">Pilih Alasan Coret (TMS):</label>
+      <select id="tmsReasonSelect" class="w-full px-3 py-2 text-xs border border-gray-300 rounded-lg mb-4 bg-white">
+        <option value="Meninggal Dunia">1. Meninggal Dunia</option>
+        <option value="Ganda">2. Data Ganda</option>
+        <option value="Pindah Domisili">3. Pindah Domisili Keluar Desa</option>
+        <option value="Tidak Dikenal">4. Tidak Dikenal / Fiktif</option>
+        <option value="TNI / POLRI">5. Anggota TNI / POLRI</option>
+        <option value="Belum Cukup Umur">6. Belum Genap 17 Tahun & Belum Kawin</option>
+      </select>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeTmsModal()" class="px-3.5 py-2 text-xs bg-gray-100 rounded-lg font-semibold text-gray-700">Batal</button>
+        <button onclick="confirmTMS()" class="px-3.5 py-2 text-xs bg-red-600 text-white rounded-lg font-semibold">Simpan TMS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAVIGATION FOR ANDROID / MOBILE -->
+  <nav class="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around py-2 z-40 text-[10px] font-semibold text-gray-500">
+    <button onclick="switchTab('dashboard')" id="mnav-dashboard" class="flex flex-col items-center text-red-800">
+      <i class="fa-solid fa-chart-pie text-base mb-0.5"></i>Rekap
+    </button>
+    <button onclick="switchTab('dp4')" id="mnav-dp4" class="flex flex-col items-center">
+      <i class="fa-solid fa-file-import text-base mb-0.5"></i>DP4
+    </button>
+    <button onclick="switchTab('coklit')" id="mnav-coklit" class="flex flex-col items-center">
+      <i class="fa-solid fa-clipboard-check text-base mb-0.5"></i>Coklit
+    </button>
+    <button onclick="switchTab('dptb')" id="mnav-dptb" class="flex flex-col items-center">
+      <i class="fa-solid fa-user-plus text-base mb-0.5"></i>DPTb
+    </button>
+    <button onclick="switchTab('dpt')" id="mnav-dpt" class="flex flex-col items-center">
+      <i class="fa-solid fa-check-double text-base mb-0.5"></i>DPT
+    </button>
+  </nav>
+
+  <script>
+    const STORAGE_KEY = 'pilkades_harjowinangun_v3';
+
+    // PEMETAAN RESMI DESA HARJOWINANGUN: RW 1 (6 RT), RW 2 (7 RT), RW 3 (6 RT), RW 4 (6 RT)
+    const WILAYAH_MAP = {
+      '001': 6,
+      '002': 7,
+      '003': 6,
+      '004': 6
+    };
+
+    const sampleData = [];
+    let voters = [];
+
+    function getRTListForRW(rw) {
+      const count = WILAYAH_MAP[rw] || 0;
+      const list = [];
+      for (let i = 1; i <= count; i++) {
+        list.push(String(i).padStart(3, '0'));
+      }
+      return list;
+    }
+
+    function getAllValidRTs() {
+      const maxRT = Math.max(...Object.values(WILAYAH_MAP));
+      const list = [];
+      for (let i = 1; i <= maxRT; i++) {
+        list.push(String(i).padStart(3, '0'));
+      }
+      return list;
+    }
+
+    function normalizeJK(raw) {
+      const val = String(raw || 'L').trim().toUpperCase();
+      if (val === 'P' || val === 'PEREMPUAN' || val === 'WANITA' || val === 'F') return 'P';
+      return 'L';
+    }
+
+    function normalizeRW(raw) {
+      const cleaned = String(raw || '1').replace(/\D/g, '');
+      const num = parseInt(cleaned || '1', 10);
+      const padded = String(num).padStart(3, '0');
+      return WILAYAH_MAP[padded] ? padded : '001';
+    }
+
+    function normalizeRT(raw, rw) {
+      const cleaned = String(raw || '1').replace(/\D/g, '');
+      const num = parseInt(cleaned || '1', 10);
+      const maxRT = WILAYAH_MAP[rw] || 6;
+      const clamped = Math.min(Math.max(num, 1), maxRT);
+      return String(clamped).padStart(3, '0');
+    }
+
+    function formatTTL(tempatLahir, tanggalLahir) {
+      const tempat = (tempatLahir || '').trim();
+      const tgl = (tanggalLahir || '').trim();
+      if (tempat && tgl) return `${tempat}, ${tgl}`;
+      return tempat || tgl || '-';
+    }
+
+    function initApp() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        voters = JSON.parse(saved);
+      } else {
+        voters = [...sampleData];
+        saveData();
+      }
+      populateCoklitRTOptions('');
+      populateDPTbRTOptions();
+      refreshAllViews();
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(voters));
+      refreshAllViews();
+    }
+
+    function clearAllData() {
+      if (confirm('PERINGATAN: Hapus seluruh data pemilih? Pastikan sudah backup CSV.')) {
+        voters = [];
+        saveData();
+      }
+    }
+
+    function deleteVoter(id) {
+      if (confirm('Hapus data pemilih ini?')) {
+        voters = voters.filter(v => v.id !== id);
+        saveData();
+      }
+    }
+
+    function switchTab(tabName) {
+      ['dashboard', 'dp4', 'coklit', 'dptb', 'dpt'].forEach(t => {
+        document.getElementById('tab-' + t).classList.add('hidden');
+        const dNav = document.getElementById('nav-' + t);
+        if (dNav) dNav.classList.remove('tab-active');
+        const mNav = document.getElementById('mnav-' + t);
+        if (mNav) mNav.classList.remove('text-red-800');
+      });
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      const activeD = document.getElementById('nav-' + tabName);
+      if (activeD) activeD.classList.add('tab-active');
+      const activeM = document.getElementById('mnav-' + tabName);
+      if (activeM) activeM.classList.add('text-red-800');
+    }
+
+    function refreshAllViews() {
+      updateStatsAndRekap();
+      renderDP4Table();
+      renderCoklitList();
+      renderDPTTable();
+    }
+
+    function updateStatsAndRekap() {
+      const dp4Total = voters.filter(v => v.sumber === 'DP4').length;
+      const belum = voters.filter(v => v.status === 'BELUM').length;
+      const tms = voters.filter(v => v.status === 'TMS').length;
+      const dptb = voters.filter(v => v.sumber === 'DPTb' && v.status !== 'TMS').length;
+      const dptAktif = voters.filter(v => v.status === 'MS').length;
+
+      document.getElementById('stat-dp4').innerText = dp4Total;
+      document.getElementById('stat-belum').innerText = belum;
+      document.getElementById('stat-tms').innerText = tms;
+      document.getElementById('stat-dptb').innerText = dptb;
+      document.getElementById('stat-dpt').innerText = dptAktif;
+
+      const rwBody = document.getElementById('rwRekapBody');
+      const rws = Object.keys(WILAYAH_MAP).sort();
+
+      rwBody.innerHTML = rws.map(rw => {
+        const jmlRT = WILAYAH_MAP[rw];
+        const subset = voters.filter(v => v.rw === rw);
+        const l = subset.filter(v => v.status === 'MS' && v.jk === 'L').length;
+        const p = subset.filter(v => v.status === 'MS' && v.jk === 'P').length;
+        const rowTms = subset.filter(v => v.status === 'TMS').length;
+        const rowDptb = subset.filter(v => v.status === 'MS' && v.sumber === 'DPTb').length;
+        const total = subset.filter(v => v.status === 'MS').length;
+
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5">
+              <span class="font-bold text-gray-800">RW ${rw}</span>
+              <span class="text-[11px] text-gray-500 ml-1.5">(RT 001 – RT ${String(jmlRT).padStart(3, '0')} • ${jmlRT} RT)</span>
+            </td>
+            <td class="px-4 py-2.5 text-center">${l}</td>
+            <td class="px-4 py-2.5 text-center">${p}</td>
+            <td class="px-4 py-2.5 text-center text-red-600 font-semibold">${rowTms}</td>
+            <td class="px-4 py-2.5 text-center text-blue-600 font-semibold">${rowDptb}</td>
+            <td class="px-4 py-2.5 text-right font-extrabold text-emerald-700">${total}</td>
+          </tr>
+        `;
+      }).join('');
+
+      const filterRW = document.getElementById('rekapFilterRW').value;
+      const targetRWs = filterRW ? [filterRW] : rws;
+      const rtRows = [];
+
+      targetRWs.forEach(rw => {
+        getRTListForRW(rw).forEach(rt => {
+          const subset = voters.filter(v => v.rw === rw && v.rt === rt);
+          const rowBelum = subset.filter(v => v.status === 'BELUM').length;
+          const l = subset.filter(v => v.status === 'MS' && v.jk === 'L').length;
+          const p = subset.filter(v => v.status === 'MS' && v.jk === 'P').length;
+          const rowTms = subset.filter(v => v.status === 'TMS').length;
+          const rowDptb = subset.filter(v => v.status === 'MS' && v.sumber === 'DPTb').length;
+          const total = subset.filter(v => v.status === 'MS').length;
+
+          rtRows.push(`
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2 font-semibold text-gray-700">RW ${rw}</td>
+              <td class="px-4 py-2 font-mono text-gray-800">RT ${rt}</td>
+              <td class="px-4 py-2 text-center text-amber-600 font-semibold">${rowBelum}</td>
+              <td class="px-4 py-2 text-center">${l}</td>
+              <td class="px-4 py-2 text-center">${p}</td>
+              <td class="px-4 py-2 text-center text-red-600 font-semibold">${rowTms}</td>
+              <td class="px-4 py-2 text-center text-blue-600 font-semibold">${rowDptb}</td>
+              <td class="px-4 py-2 text-right font-extrabold text-emerald-700">${total}</td>
+            </tr>
+          `);
+        });
+      });
+
+      document.getElementById('rtRekapBody').innerHTML = rtRows.join('');
+    }
+
+    // FORMAT 9 KOLOM: NIK, NAMA, JENIS_KELAMIN, TEMPAT_LAHIR, TANGGAL_LAHIR, ALAMAT, RT, RW, TPS
+    function handleCSVUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const text = e.target.result;
+        const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+        if (lines.length < 2) return alert('File CSV kosong atau tidak valid.');
+
+        const delimiter = lines[0].includes(';') ? ';' : ',';
+        let importedCount = 0;
+
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(delimiter).map(c => c.trim().replace(/^"|"$/g, ''));
+          if (cols.length >= 2 && cols[1]) {
+            const rw = normalizeRW(cols[7]);
+            const rt = normalizeRT(cols[6], rw);
+            voters.push({
+              id: Date.now() + '-' + i,
+              nik: cols[0] || '-',
+              nama: cols[1].toUpperCase(),
+              jk: normalizeJK(cols[2]),
+              tempatLahir: (cols[3] || '').toUpperCase(),
+              tglLahir: cols[4] || '',
+              alamat: cols[5] || 'Harjowinangun',
+              rt: rt,
+              rw: rw,
+              tps: (cols[8] || 'TPS 01').toUpperCase(),
+              sumber: 'DP4',
+              status: 'BELUM',
+              keterangan: ''
+            });
+            importedCount++;
+          }
+        }
+        saveData();
+        event.target.value = '';
+        alert(`Berhasil mengimpor ${importedCount} data pemilih DP4!`);
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadTemplateCSV() {
+      const csvContent = [
+        "NIK,NAMA,JENIS_KELAMIN,TEMPAT_LAHIR,TANGGAL_LAHIR,ALAMAT,RT,RW,TPS",
+        "3328061010800001,BUDI SANTOSO,L,TEGAL,1980-10-10,Harjowinangun Balapulang Tegal,001,001,TPS 01",
+        "3328065204880002,SRI WAHYUNI,P,TEGAL,1988-04-12,Harjowinangun Balapulang Tegal,007,002,TPS 02"
+      ].join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Template_DP4_Harjowinangun_9Kolom.csv";
+      link.click();
+    }
+
+    function renderDP4Table() {
+      const dp4List = voters.filter(v => v.sumber === 'DP4');
+      document.getElementById('dp4CountBadge').innerText = `${dp4List.length} Data`;
+      const tbody = document.getElementById('dp4TableBody');
+      if (dp4List.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-gray-400">Belum ada data DP4. Silakan unggah file CSV DP4.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = dp4List.map(v => `
+        <tr>
+          <td class="px-3 py-2 font-mono">${v.nik}</td>
+          <td class="px-3 py-2 font-semibold">${v.nama}</td>
+          <td class="px-3 py-2">${v.jk}</td>
+          <td class="px-3 py-2">${formatTTL(v.tempatLahir, v.tglLahir)}</td>
+          <td class="px-3 py-2">${v.alamat}</td>
+          <td class="px-3 py-2">RT ${v.rt}/RW ${v.rw}</td>
+          <td class="px-3 py-2">${v.tps}</td>
+          <td class="px-3 py-2">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              v.status === 'MS' ? 'bg-emerald-100 text-emerald-700' :
+              v.status === 'TMS' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+            }">${v.status}</span>
+          </td>
+          <td class="px-3 py-2 text-center">
+            <button onclick="deleteVoter('${v.id}')" class="text-red-600 hover:text-red-800 text-xs" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function onFilterRWChange() {
+      const rw = document.getElementById('filterRW').value;
+      populateCoklitRTOptions(rw);
+      renderCoklitList();
+    }
+
+    function populateCoklitRTOptions(rw) {
+      const select = document.getElementById('filterRT');
+      const rts = rw ? getRTListForRW(rw) : getAllValidRTs();
+      select.innerHTML = '<option value="">Semua RT</option>' + rts.map(rt => `<option value="${rt}">RT ${rt}</option>`).join('');
+    }
+
+    function populateDPTbRTOptions() {
+      const rw = document.getElementById('dptbRw').value;
+      const select = document.getElementById('dptbRt');
+      select.innerHTML = getRTListForRW(rw).map(rt => `<option value="${rt}">RT ${rt}</option>`).join('');
+    }
+
+    function renderCoklitList() {
+      const query = document.getElementById('searchCoklit').value.toLowerCase();
+      const rwFilter = document.getElementById('filterRW').value;
+      const rtFilter = document.getElementById('filterRT').value;
+      const tpsFilter = document.getElementById('filterTPS').value.trim().toLowerCase();
+      const statusFilter = document.getElementById('filterStatus').value;
+
+      const filtered = voters.filter(v => {
+        const matchQuery =
+          v.nama.toLowerCase().includes(query) ||
+          v.nik.includes(query) ||
+          (v.tempatLahir || '').toLowerCase().includes(query);
+        const matchRW = !rwFilter || v.rw === rwFilter;
+        const matchRT = !rtFilter || v.rt === rtFilter;
+        const matchTPS = !tpsFilter || (v.tps || '').toLowerCase().includes(tpsFilter);
+        const matchStatus = !statusFilter || v.status === statusFilter;
+        return matchQuery && matchRW && matchRT && matchTPS && matchStatus;
+      });
+
+      const container = document.getElementById('coklitCardsContainer');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="col-span-full bg-white p-8 rounded-xl text-center text-xs text-gray-400">Belum ada data pemilih untuk ditampilkan atau difilter.</div>';
+        return;
+      }
+
+      container.innerHTML = filtered.map(v => `
+        <div class="bg-white p-4 rounded-xl shadow-sm border ${
+          v.status === 'MS' ? 'border-emerald-200' : v.status === 'TMS' ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
+        } flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex justify-between items-start gap-2">
+              <div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">${v.sumber} • ${v.tps}</span>
+                <h4 class="font-bold text-gray-900 text-sm mt-1">${v.nama} (${v.jk})</h4>
+                <p class="text-xs font-mono text-gray-500">NIK: ${v.nik}</p>
+              </div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full ${
+                v.status === 'MS' ? 'bg-emerald-100 text-emerald-800' :
+                v.status === 'TMS' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+              }">${v.status}</span>
+            </div>
+            <p class="text-xs text-gray-600 mt-1.5"><i class="fa-solid fa-cake-candles text-red-700 mr-1"></i> TTL: ${formatTTL(v.tempatLahir, v.tglLahir)}</p>
+            <p class="text-xs text-gray-600 mt-1"><i class="fa-solid fa-location-dot text-red-700 mr-1"></i> ${v.alamat} (RT ${v.rt} / RW ${v.rw})</p>
+            ${v.keterangan ? `<p class="text-[11px] text-red-600 font-semibold mt-1">Ket: ${v.keterangan}</p>` : ''}
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+            <button onclick="setVoterMS('${v.id}')" class="py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
+              v.status === 'MS' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+            }">
+              <i class="fa-solid fa-check"></i> Memenuhi Syarat
+            </button>
+            <button onclick="openTmsModal('${v.id}')" class="py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 ${
+              v.status === 'TMS' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700 hover:bg-red-100'
+            }">
+              <i class="fa-solid fa-xmark"></i> TMS / Coret
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function setVoterMS(id) {
+      const idx = voters.findIndex(v => v.id === id);
+      if (idx !== -1) {
+        voters[idx].status = 'MS';
+        voters[idx].keterangan = 'Terverifikasi Coklit';
+        saveData();
+      }
+    }
+
+    function openTmsModal(id) {
+      const voter = voters.find(v => v.id === id);
+      if (!voter) return;
+      document.getElementById('tmsVoterId').value = id;
+      document.getElementById('tmsVoterName').innerText = `${voter.nama} (NIK: ${voter.nik})`;
+      document.getElementById('tmsModal').classList.remove('hidden');
+      document.getElementById('tmsModal').classList.add('flex');
+    }
+
+    function closeTmsModal() {
+      document.getElementById('tmsModal').classList.add('hidden');
+      document.getElementById('tmsModal').classList.remove('flex');
+    }
+
+    function confirmTMS() {
+      const id = document.getElementById('tmsVoterId').value;
+      const reason = document.getElementById('tmsReasonSelect').value;
+      const idx = voters.findIndex(v => v.id === id);
+      if (idx !== -1) {
+        voters[idx].status = 'TMS';
+        voters[idx].keterangan = reason;
+        saveData();
+      }
+      closeTmsModal();
+    }
+
+    function addDPTb(e) {
+      e.preventDefault();
+      const nik = document.getElementById('dptbNik').value.trim();
+      if (voters.some(v => v.nik === nik)) {
+        return alert('NIK tersebut sudah terdaftar dalam sistem!');
+      }
+      const rw = document.getElementById('dptbRw').value;
+      const rt = document.getElementById('dptbRt').value;
+
+      voters.push({
+        id: 'dptb-' + Date.now(),
+        nik: nik,
+        nama: document.getElementById('dptbNama').value.trim().toUpperCase(),
+        jk: document.getElementById('dptbJk').value,
+        tempatLahir: document.getElementById('dptbTempatLahir').value.trim().toUpperCase(),
+        tglLahir: document.getElementById('dptbTgl').value,
+        alamat: document.getElementById('dptbAlamat').value.trim(),
+        rt: rt,
+        rw: rw,
+        tps: document.getElementById('dptbTps').value.trim().toUpperCase(),
+        sumber: 'DPTb',
+        status: 'MS',
+        keterangan: 'Pemilih Tambahan (DPTb)'
+      });
+      e.target.reset();
+      populateDPTbRTOptions();
+      saveData();
+      alert('Pemilih DPTb berhasil ditambahkan dan otomatis masuk ke DPT!');
+      switchTab('dpt');
+    }
+
+    function renderDPTTable() {
+      const dptList = voters.filter(v => v.status === 'MS');
+      const tbody = document.getElementById('dptTableBody');
+      if (dptList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="px-4 py-6 text-center text-gray-400">Belum ada pemilih berstatus MS/DPT.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = dptList.map((v, i) => `
+        <tr class="hover:bg-gray-50">
+          <td class="px-3 py-2">${i + 1}</td>
+          <td class="px-3 py-2 font-mono">${v.nik}</td>
+          <td class="px-3 py-2 font-semibold">${v.nama}</td>
+          <td class="px-3 py-2">${v.jk}</td>
+          <td class="px-3 py-2">${formatTTL(v.tempatLahir, v.tglLahir)}</td>
+          <td class="px-3 py-2">${v.alamat}</td>
+          <td class="px-3 py-2">RT ${v.rt}/RW ${v.rw}</td>
+          <td class="px-3 py-2 font-semibold">${v.tps}</td>
+          <td class="px-3 py-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${v.sumber === 'DPTb' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'}">
+              ${v.sumber}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function exportCSV(stage) {
+      let dataToExport = [];
+      if (stage === 'DPS') {
+        dataToExport = voters.filter(v => v.sumber === 'DP4' && v.status !== 'TMS');
+      } else {
+        dataToExport = voters.filter(v => v.status === 'MS');
+      }
+
+      if (dataToExport.length === 0) return alert('Tidak ada data untuk diunduh.');
+
+      let csv = `NO,NIK,NAMA,JENIS_KELAMIN,TEMPAT_LAHIR,TANGGAL_LAHIR,ALAMAT,RT,RW,TPS,SUMBER,STATUS\n`;
+      dataToExport.forEach((v, idx) => {
+        csv += `${idx + 1},"${v.nik}","${v.nama}",${v.jk},"${v.tempatLahir || ''}","${v.tglLahir || ''}","${v.alamat}",${v.rt},${v.rw},"${v.tps}",${v.sumber},${v.status}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `${stage}_Pilkades_Harjowinangun_2026.csv`;
+      link.click();
+    }
+
+    initApp();
+  </script>
+</body>
+</html>
